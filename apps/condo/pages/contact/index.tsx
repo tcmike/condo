@@ -29,6 +29,8 @@ import { ImportWrapper } from '@condo/domains/common/components/Import/Index'
 import { DiffOutlined } from '@ant-design/icons'
 import { useImporterFunctions } from '@condo/domains/contact/hooks/useImporterFunctions'
 
+import { useMyContext } from '../../state1'
+
 const ADD_CONTACT_ROUTE = '/contact/create/'
 
 const ContactPage = () => {
@@ -103,6 +105,8 @@ const ContactPage = () => {
     const [search, handleSearchChange] = useSearch<IFilters>(loading)
     const canManageContacts = get(userOrganization, ['link', 'role', 'canManageContacts'], false)
     const [columns, contactNormalizer, contactValidator, contactCreator] = useImporterFunctions()
+    const { foo, setState } = useMyContext()
+    console.log('contact:', foo)
     return (
         <>
             <Head>
@@ -147,9 +151,10 @@ const ContactPage = () => {
                                             <Button
                                                 key='left'
                                                 type={'sberPrimary'}
-                                                onClick={() => router.push(ADD_CONTACT_ROUTE)}
+                                                // onClick={() => router.push(ADD_CONTACT_ROUTE)}
+                                                onClick={() => setState({ foo: 33 })}
                                             >
-                                                {CreateContact}
+                                                {CreateContact}{foo}
                                             </Button>
                                         </Space>
                                     </Row>

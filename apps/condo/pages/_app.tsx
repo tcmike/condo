@@ -25,6 +25,8 @@ import { GearIcon } from '@condo/domains/common/components/icons/GearIcon'
 import { GET_ORGANIZATION_EMPLOYEE_BY_ID_QUERY } from '@condo/domains/organization/gql'
 import { extractReqLocale } from '@condo/domains/common/utils/locale'
 
+import { withMyContext } from '../state1'
+
 if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
     whyDidYouRender(React, {
         logOnDifferentValues: true,
@@ -119,4 +121,4 @@ export default (
                 withOrganization({
                     ssr: true,
                     GET_ORGANIZATION_TO_USER_LINK_BY_ID_QUERY: GET_ORGANIZATION_EMPLOYEE_BY_ID_QUERY,
-                })(MyApp)))))
+                })(withMyContext({})(MyApp))))))

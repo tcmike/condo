@@ -39,6 +39,8 @@ import LoadingOrErrorPage from '@condo/domains/common/components/containers/Load
 import { TitleHeaderAction } from '@condo/domains/common/components/HeaderActions'
 import CreatePropertyPage from './create'
 
+import { useMyContext } from '../../state1'
+
 const PropertyPageViewMap = (): React.FC => {
     const userOrganization = useOrganization()
     const userOrganizationId = get(userOrganization, ['organization', 'id'])
@@ -186,6 +188,9 @@ const PropertyPageViewTable = (): React.FC => {
 
     const [columns, propertyNormalizer, propertyValidator, propertyCreator] = useImporterFunctions()
 
+    const { foo, setState } = useMyContext()
+    console.log('property:', foo)
+
     if (error) {
         return <LoadingOrErrorPage title={PageTitleMsg} loading={loading} error={error ? ServerErrorMsg : null}/>
     }
@@ -221,8 +226,9 @@ const PropertyPageViewTable = (): React.FC => {
                             secondary
                         />
                     </ImportWrapper>
-                    <Button type='sberPrimary' onClick={() => router.push(createRoute)}>
-                        {CreateLabel}
+                    {/*<Button type='sberPrimary' onClick={() => router.push(createRoute)}>*/}
+                    <Button type='sberPrimary' onClick={() => setState({ foo: 49 })}>
+                        {CreateLabel}{foo}
                     </Button>
                 </Space>
             </Col>
