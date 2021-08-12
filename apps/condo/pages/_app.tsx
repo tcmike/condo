@@ -27,10 +27,34 @@ import { extractReqLocale } from '@condo/domains/common/utils/locale'
 
 import { withMyContext } from '../state1'
 
+import Icon from '@ant-design/icons'
+
+import { useMyContext } from '../state1'
+
 if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
     whyDidYouRender(React, {
         logOnDifferentValues: true,
     })
+}
+
+const UserXXXIconSVG: React.FC = () => {
+    return (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path fillRule="evenodd" clipRule="evenodd" d="M12 13C14.7614 13 17 10.7614 17 8C17 5.23858 14.7614 3 12 3C9.23857 3 6.99999 5.23858 6.99999 8C6.99999 10.7614 9.23857 13 12 13ZM12 13C18.6328 13 20.4538 18.843 20.8824 20.8401C20.9578 21.1913 20.6844 21.5 20.3253 21.5H3.67472C3.31556 21.5 3.04218 21.1913 3.11755 20.8401C3.54621 18.8431 5.36714 13 12 13Z" fill="currentColor"/>
+        </svg>
+    )
+}
+
+// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
+const UserXXXIcon = props => {
+    const { foo, data } = useMyContext()
+
+    console.log('Render ICON!', foo, (data.objs) ? data.objs.length : 0)
+
+    return (<>
+        <Icon component={UserXXXIconSVG} {...props}/>
+        <div>{foo} -- {data.loading}{(data.objs) ? data.objs.length : 0}</div>
+    </>)
 }
 
 function menuDataRender () {
@@ -57,7 +81,7 @@ function menuDataRender () {
         },
         {
             path: '/employee',
-            icon: UserIcon,
+            icon: UserXXXIcon,
             locale: 'menu.Employees',
         },
         // TODO (savelevMatthew): Toggle this feature later
@@ -121,4 +145,4 @@ export default (
                 withOrganization({
                     ssr: true,
                     GET_ORGANIZATION_TO_USER_LINK_BY_ID_QUERY: GET_ORGANIZATION_EMPLOYEE_BY_ID_QUERY,
-                })(withMyContext({})(MyApp))))))
+                })(withMyContext({ ssr: true })(MyApp))))))

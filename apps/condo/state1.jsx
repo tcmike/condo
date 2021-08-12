@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState } from 'react'
+import { Property } from '@condo/domains/property/utils/clientSchema'
 
-function createContextHOC (name, defaultValue = {}) {
+function createContextHOC (name, defaultValue = {}, useQuery) {
     const DEBUG_RERENDERS = true
     const DEBUG_RERENDERS_BY_WHY_DID_YOU_RENDER = true
 
@@ -33,8 +34,10 @@ function createContextHOC (name, defaultValue = {}) {
 
     const MyContextProvider = ({ children, initialValue }) => {
         const [state, setState] = useState(initialValue)
+        const data = useQuery()
         const value = {
             ...state,
+            data,
             setState,
         }
 
@@ -64,4 +67,10 @@ function createContextHOC (name, defaultValue = {}) {
 export const {
     useMyContext,
     withMyContext,
-} = createContextHOC('test1', { foo: 1 })
+} = createContextHOC(
+    'test1',
+    { foo: 1 },
+    function useQuery () {
+        return Property.useObjects({})
+    },
+)

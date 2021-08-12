@@ -188,8 +188,8 @@ const PropertyPageViewTable = (): React.FC => {
 
     const [columns, propertyNormalizer, propertyValidator, propertyCreator] = useImporterFunctions()
 
-    const { foo, setState } = useMyContext()
-    console.log('property:', foo)
+    const { foo, data, setState } = useMyContext()
+    console.log('property:', foo, data)
 
     useEffect(() => {
         console.log('f', foo)
