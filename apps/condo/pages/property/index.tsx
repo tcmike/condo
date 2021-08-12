@@ -1,6 +1,6 @@
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-nocheck
-import React, { useCallback, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import { PageContent, PageHeader, PageWrapper } from '@condo/domains/common/components/containers/BaseLayout'
 import { Typography, Space, Radio, Row, Col, Input, Table } from 'antd'
 import { DatabaseFilled, DiffOutlined } from '@ant-design/icons'
@@ -190,6 +190,18 @@ const PropertyPageViewTable = (): React.FC => {
 
     const { foo, setState } = useMyContext()
     console.log('property:', foo)
+
+    useEffect(() => {
+        console.log('f', foo)
+        const x = setInterval(() => {
+            setState(
+                ({ foo }, props) => { return {foo: foo  + 299 }}
+            )
+        }, 2000)
+        return () => {
+            clearInterval(x)
+        }
+    }, [])
 
     if (error) {
         return <LoadingOrErrorPage title={PageTitleMsg} loading={loading} error={error ? ServerErrorMsg : null}/>
