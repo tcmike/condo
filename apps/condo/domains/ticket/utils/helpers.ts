@@ -376,12 +376,14 @@ export const formatDate = (intl, dateStr?: string): string => {
 
 export type specificationTypes = 'day' | 'week' | 'month'
 export type addressPickerType = { id: string; value: string; }
+export type classifierPickerType = { id: string; value: string }
 export type GroupTicketsByTypes = 'status' | 'property' | 'category' | 'user' | 'responsible'
 
 export type ticketAnalyticsPageFilters = {
     range: [Dayjs, Dayjs];
     specification: specificationTypes;
     addressList: addressPickerType[];
+    classifierList: classifierPickerType[];
 }
 
 interface IFilterToQuery {

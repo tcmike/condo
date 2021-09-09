@@ -20,7 +20,7 @@ import { useOrganization } from '@core/next/organization'
 import get from 'lodash/get'
 import isEmpty from 'lodash/isEmpty'
 import { TICKET_ANALYTICS_REPORT_QUERY, EXPORT_TICKET_ANALYTICS_TO_EXCEL } from '@condo/domains/ticket/gql'
-import { useLazyQuery } from '@core/next/apollo'
+import { useApolloClient, useLazyQuery } from '@core/next/apollo'
 
 import dayjs, { Dayjs } from 'dayjs'
 import quarterOfYear from 'dayjs/plugin/quarterOfYear'
@@ -46,6 +46,10 @@ import { ReturnBackHeaderAction } from '@condo/domains/common/components/HeaderA
 import TicketChartView from '@condo/domains/ticket/components/analytics/TicketChartView'
 import TicketListView from '@condo/domains/ticket/components/analytics/TicketListView'
 import { DATE_DISPLAY_FORMAT, TICKET_REPORT_DAY_GROUP_STEPS } from '@condo/domains/ticket/constants/common'
+import {
+    ClassifiersQueryRemote,
+    TicketClassifierTypes,
+} from '@condo/domains/ticket/utils/clientSchema/classifierSearch'
 
 dayjs.extend(quarterOfYear)
 
@@ -56,7 +60,7 @@ interface ITicketAnalyticsPage extends React.FC {
 
 interface ITicketAnalyticsPageFilterProps {
     viewMode: ViewModeTypes
-    onChange?: ({ range, specification, addressList }: ticketAnalyticsPageFilters) => void
+    onChange?: ({ range, specification, addressList, classifierList }: ticketAnalyticsPageFilters) => void
 }
 const FORM_ITEM_STYLE = {
     labelCol: {
@@ -93,7 +97,9 @@ const TicketAnalyticsPageFilter: React.FC<ITicketAnalyticsPageFilterProps> = ({ 
     const SpecificationDays = intl.formatMessage({ id: 'pages.condo.analytics.TicketAnalyticsPage.Filter.Specification.Days' })
     const SpecificationWeeks = intl.formatMessage({ id: 'pages.condo.analytics.TicketAnalyticsPage.Filter.Specification.Weeks' })
     const AllAddressesPlaceholder = intl.formatMessage({ id: 'pages.condo.analytics.TicketAnalyticsPage.Filter.AllAddressesPlaceholder' })
+    const AllClassifiersPlaceholder = intl.formatMessage({ id: 'pages.condo.analytics.TicketAnalyticsPage.Filter.AllClassifiersPlaceholder' })
     const AddressTitle = intl.formatMessage({ id: 'pages.condo.analytics.TicketAnalyticsPage.Filter.AddressTitle' })
+    const ClassifierTitle = intl.formatMessage({ id: 'Classifier' })
     const ApplyButtonTitle = intl.formatMessage({ id: 'Show' })
     const PresetWeek = intl.formatMessage({ id: 'pages.condo.analytics.TicketAnalyticsPage.Filter.PeriodPreset.Week' })
     const PresetMonth = intl.formatMessage({ id: 'pages.condo.analytics.TicketAnalyticsPage.Filter.PeriodPreset.Month' })
@@ -104,9 +110,11 @@ const TicketAnalyticsPageFilter: React.FC<ITicketAnalyticsPageFilterProps> = ({ 
     const userOrganizationId = get(userOrganization, ['organization', 'id'])
     const [dateRange, setDateRange] = useState<[Dayjs, Dayjs]>([dayjs().subtract(1, 'week'), dayjs()])
     const [dateRangePreset, setDateRangePreset] = useState<null | string>(null)
-    const [addressList, setAddressList] = useState([])
-    const addressListRef = useRef([])
+    const [addressList, setAddressList] = useState<string []>([])
+    const [classifierList, setClassifierList] = useState<string []>([])
     const [specification, setSpecification] = useState<specificationTypes>(TICKET_REPORT_DAY_GROUP_STEPS[0] as specificationTypes)
+    const addressListRef = useRef([])
+    const classifierListRef = useRef([])
 
     const updateUrlFilters = useCallback(() => {
         const [startDate, endDate] = dateRange
@@ -115,13 +123,15 @@ const TicketAnalyticsPageFilter: React.FC<ITicketAnalyticsPageFilterProps> = ({ 
             createdAt_gte: endDate.toISOString(),
             specification,
             addressList: JSON.stringify(addressListRef.current),
+            classifierList: JSON.stringify(classifierListRef.current),
             viewMode,
         }))
-    }, [dateRange, specification, addressList, viewMode])
+    }, [dateRange, specification, addressList, viewMode, classifierList])
 
     useEffect(() => {
         const queryParams = getQueryParams()
         const addressList = JSON.parse(get(queryParams, 'addressList', '[]'))
+        const classifierList = JSON.parse(get(queryParams, 'classifierList', '[]'))
         const startDate = get(queryParams, 'createdAt_lte', dayjs().subtract(1, 'week').toISOString())
         const endDate = get(queryParams, 'createdAt_gte', dayjs().toISOString())
         const range = [dayjs(startDate), dayjs(endDate)] as [Dayjs, Dayjs]
@@ -132,8 +142,9 @@ const TicketAnalyticsPageFilter: React.FC<ITicketAnalyticsPageFilterProps> = ({ 
             setDateRange(range)
             setSpecification(specificationUrl)
         }
+        classifierList && setClassifierList(classifierList.length ? classifierList.map(({ value }) => value) : [])
         isEmpty(queryParams) && updateUrlFilters()
-        onChange({ range, specification, addressList })
+        onChange({ range, specification, addressList, classifierList })
     }, [])
 
     useEffect(() => {
@@ -144,11 +155,10 @@ const TicketAnalyticsPageFilter: React.FC<ITicketAnalyticsPageFilterProps> = ({ 
         updateUrlFilters()
     }, [viewMode])
 
-
     const applyFilters = useCallback(() => {
         updateUrlFilters()
-        onChange({ range: dateRange, specification, addressList: addressListRef.current })
-    }, [dateRange, specification, addressList, viewMode])
+        onChange({ range: dateRange, specification, addressList: addressListRef.current, classifierList: classifierListRef.current })
+    }, [dateRange, specification, addressList, viewMode, classifierList])
 
     const searchAddress = useCallback(
         (client, query) => {
@@ -166,6 +176,17 @@ const TicketAnalyticsPageFilter: React.FC<ITicketAnalyticsPageFilterProps> = ({ 
         setAddressList(labelsList as string[])
         addressListRef.current = [...searchObjectsList.map(({ key: id, title: value }) => ({ id, value }))]
     }, [addressList])
+
+    const classifiersLoader = new ClassifiersQueryRemote(useApolloClient())
+
+    const searchClassifiers = (_, input) =>
+        classifiersLoader.search(input, TicketClassifierTypes.category)
+            .then(result=>result.map((classifier)=> ({ text: classifier.name, value: classifier.id })))
+
+    const onClassifierChange = useCallback((idList, searchObjectsList) => {
+        setClassifierList(idList)
+        classifierListRef.current = [...searchObjectsList.map(({ key: id, title: value }) => ({ id, value }))]
+    }, [classifierList])
 
     return (
         <Form>
@@ -211,6 +232,23 @@ const TicketAnalyticsPageFilter: React.FC<ITicketAnalyticsPageFilterProps> = ({ 
                         />
                     </Form.Item>
                 </Col>
+            </Row>
+            <Row>
+                <Col flex={1}>
+                    <Form.Item label={ClassifierTitle} {...FORM_ITEM_STYLE}>
+                        <GraphQlSearchInput
+                            allowClear
+                            search={searchClassifiers}
+                            mode={'multiple'}
+                            value={classifierList}
+                            maxTagCount='responsive'
+                            onChange={onClassifierChange}
+                            placeholder={AllClassifiersPlaceholder}
+                        />
+                    </Form.Item>
+                </Col>
+            </Row>
+            <Row style={{ marginTop: 20 }}>
                 <Col span={24}>
                     <Button onClick={applyFilters} type={'sberPrimary'}>{ApplyButtonTitle}</Button>
                 </Col>
