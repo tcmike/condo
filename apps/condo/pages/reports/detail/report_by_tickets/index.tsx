@@ -41,7 +41,7 @@ import {
     ticketAnalyticsPageFilters,
 } from '@condo/domains/ticket/utils/helpers'
 import { GraphQlSearchInput } from '@condo/domains/common/components/GraphQlSearchInput'
-import { searchProperty } from '@condo/domains/ticket/utils/clientSchema/search'
+import { searchEmployeeUser, searchProperty } from '@condo/domains/ticket/utils/clientSchema/search'
 import { ReturnBackHeaderAction } from '@condo/domains/common/components/HeaderActions'
 import TicketChartView from '@condo/domains/ticket/components/analytics/TicketChartView'
 import TicketListView from '@condo/domains/ticket/components/analytics/TicketListView'
@@ -98,8 +98,10 @@ const TicketAnalyticsPageFilter: React.FC<ITicketAnalyticsPageFilterProps> = ({ 
     const SpecificationWeeks = intl.formatMessage({ id: 'pages.condo.analytics.TicketAnalyticsPage.Filter.Specification.Weeks' })
     const AllAddressesPlaceholder = intl.formatMessage({ id: 'pages.condo.analytics.TicketAnalyticsPage.Filter.AllAddressesPlaceholder' })
     const AllClassifiersPlaceholder = intl.formatMessage({ id: 'pages.condo.analytics.TicketAnalyticsPage.Filter.AllClassifiersPlaceholder' })
+    const AllExecutorsPlaceholder = intl.formatMessage({ id: 'pages.condo.analytics.TicketAnalyticsPage.Filter.AllExecutorsPlaceholder' })
     const AddressTitle = intl.formatMessage({ id: 'pages.condo.analytics.TicketAnalyticsPage.Filter.AddressTitle' })
     const ClassifierTitle = intl.formatMessage({ id: 'Classifier' })
+    const ExecutorTitle = intl.formatMessage({ id: 'field.Executor' })
     const ApplyButtonTitle = intl.formatMessage({ id: 'Show' })
     const PresetWeek = intl.formatMessage({ id: 'pages.condo.analytics.TicketAnalyticsPage.Filter.PeriodPreset.Week' })
     const PresetMonth = intl.formatMessage({ id: 'pages.condo.analytics.TicketAnalyticsPage.Filter.PeriodPreset.Month' })
@@ -112,6 +114,7 @@ const TicketAnalyticsPageFilter: React.FC<ITicketAnalyticsPageFilterProps> = ({ 
     const [dateRangePreset, setDateRangePreset] = useState<null | string>(null)
     const [addressList, setAddressList] = useState<string []>([])
     const [classifierList, setClassifierList] = useState<string []>([])
+    const [executorList, setExecutorList] = useState<string []>([])
     const [specification, setSpecification] = useState<specificationTypes>(TICKET_REPORT_DAY_GROUP_STEPS[0] as specificationTypes)
     const addressListRef = useRef([])
     const classifierListRef = useRef([])
@@ -188,6 +191,10 @@ const TicketAnalyticsPageFilter: React.FC<ITicketAnalyticsPageFilterProps> = ({ 
         classifierListRef.current = [...searchObjectsList.map(({ key: id, title: value }) => ({ id, value }))]
     }, [classifierList])
 
+    const onExecutorChange = useCallback((idList, searchObjectsList) => {
+        setExecutorList(idList)
+    }, [executorList])
+
     return (
         <Form>
             <Row gutter={[44, 12]}>
@@ -244,6 +251,21 @@ const TicketAnalyticsPageFilter: React.FC<ITicketAnalyticsPageFilterProps> = ({ 
                             maxTagCount='responsive'
                             onChange={onClassifierChange}
                             placeholder={AllClassifiersPlaceholder}
+                        />
+                    </Form.Item>
+                </Col>
+            </Row>
+            <Row>
+                <Col flex={1}>
+                    <Form.Item label={ExecutorTitle} {...FORM_ITEM_STYLE}>
+                        <GraphQlSearchInput
+                            allowClear
+                            search={searchEmployeeUser(userOrganizationId)}
+                            mode='multiple'
+                            value={executorList}
+                            onChange={onExecutorChange}
+                            maxTagCount='responsive'
+                            placeholder={AllExecutorsPlaceholder}
                         />
                     </Form.Item>
                 </Col>
