@@ -676,7 +676,7 @@
   "subscription.modal.newClient.currentTariff": "Your current tariff: «For customers of Sber» - 1 ruble per year.",
   "subscription.modal.newClient.trialTimeEndDate": "Free period up to: {endDate}",
   "subscription.modal.newClient.serviceDisconnect": "You can disconnect from the service at any time, revoke your subscription to Sber Business Online in the «Service Management» section.",
-  "subscription.indicator.trial.active.many": "Trial mode expires in {days}",
+  "subscription.indicator.trial.active": "Trial mode expires in {days}",
   "subscription.indicator.trial.expired.info": "Trial is expired",
   "subscription.indicator.trial.expired.prompt": "Pay",
   "Seconds": "Seconds",
