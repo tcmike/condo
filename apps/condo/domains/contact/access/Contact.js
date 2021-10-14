@@ -9,10 +9,20 @@ const { Contact } = require('../utils/serverSchema')
 const { checkRelatedOrganizationPermission } = require('@condo/domains/organization/utils/accessSchema')
 const { queryOrganizationEmployeeFromRelatedOrganizationFor } = require('@condo/domains/organization/utils/accessSchema')
 const { queryOrganizationEmployeeFor } = require('@condo/domains/organization/utils/accessSchema')
+const { isObject } = require('lodash')
 
-async function canReadContacts ({ authentication: { item: user } }) {
+function getPerUserReadAccess (user, listKey) {
+    // return { id_in: ['uid1', 'uid2'] }
+    const access = get(user.access, [listKey, 'read']) // return list filter
+    if (isObject(access)) return access
+    return null
+}
+
+async function canReadContacts ({ authentication: { item: user }, listKey, operation, itemId, itemIds, originalInput }) {
     if (!user) return throwAuthenticationError()
     if (user.isAdmin) return {}
+    const customAccess = getPerUserReadAccess(user, listKey)
+    if (customAccess) return { customAccess }
     const userId = user.id
     return {
         organization: {
@@ -24,9 +34,22 @@ async function canReadContacts ({ authentication: { item: user } }) {
     }
 }
 
-async function canManageContacts ({ authentication: { item: user }, originalInput, operation, itemId, context }) {
+function getPerUserManageAccess (user, listKey, operation, fields = []) {
+    // operation: create update delete
+    // fields: [] for delete action
+    // ID...
+    const access = get(user.access, [listKey, operation]) // return allow to access fields
+    if (!Array.isArray(access)) return null
+    const accessSet = new Set(access)
+    const difference = new Set(fields.filter(x => !accessSet.has(x)))
+    return difference.size === 0 // check only allowed fields!
+}
+
+async function canManageContacts ({ authentication: { item: user }, listKey, originalInput, operation, itemId, itemIds, context }) {
     if (!user) return throwAuthenticationError()
     if (user.isAdmin) return true
+    const customAccess = getPerUserManageAccess(user, listKey, operation, originalInput ? Object.keys(originalInput) : [])
+    if (customAccess !== null) return customAccess
     if (operation === 'create') {
         const organizationId = get(originalInput, ['organization', 'connect', 'id'])
         const canManageRelatedOrganizationContacts = await checkRelatedOrganizationPermission(context, user.id, organizationId, 'canManageContacts')
