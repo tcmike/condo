@@ -5,7 +5,9 @@
 const { WRONG_EMAIL_ERROR } = require('@condo/domains/user/constants/errors')
 const { getRandomString, makeLoggedInAdminClient, makeClient } = require('@core/keystone/test.utils')
 
-const { User, UserAdmin, createTestUser, updateTestUser, makeClientWithNewRegisteredAndLoggedInUser, makeLoggedInClient, createTestLandlineNumber, createTestPhone, createTestEmail } = require('@condo/domains/user/utils/testSchema')
+const { User, UserAdmin, createTestUser, updateTestUser, makeClientWithNewRegisteredAndLoggedInUser, makeLoggedInClient, createTestLandlineNumber, createTestPhone, createTestEmail,
+    makeClientWithResidentUser,
+} = require('@condo/domains/user/utils/testSchema')
 const { expectToThrowAccessDeniedErrorToObjects,  expectToThrowAccessDeniedErrorToObj, expectToThrowAuthenticationErrorToObj } = require('@condo/domains/common/utils/testSchema')
 const { GET_MY_USERINFO, SIGNIN_MUTATION } = require('@condo/domains/user/gql')
 const { DEFAULT_TEST_USER_IDENTITY, DEFAULT_TEST_USER_SECRET } = require('@core/keystone/test.utils')
@@ -120,12 +122,30 @@ describe('User', () => {
         })
     })
 
-    test('user: update self User email should fail', async () => {
+    // TODO(pahaz): !!! remove this test in the FUTURE
+    test('user: update self resident phone should ok', async () => {
+        const client = await makeClientWithResidentUser()
+        const payload = { phone: client.userAttrs.phone }
+        await updateTestUser(client, client.user.id, payload)
+
+        const objs = await UserAdmin.getAll(client, { id: client.user.id })
+        expect(objs[0]).toEqual(expect.objectContaining({ phone: client.userAttrs.phone }))
+    })
+
+    // TODO(pahaz): !!! unskip!
+    test.skip('user: update self User email should fail', async () => {
         const client = await makeClientWithNewRegisteredAndLoggedInUser()
         const payload = { email: createTestEmail() }
         await expectToThrowAccessDeniedErrorToObj(async () => {
             await updateTestUser(client, client.user.id, payload)
         })
+    })
+
+    test('user: update self User name', async () => {
+        const client = await makeClientWithNewRegisteredAndLoggedInUser()
+        const payload = { name: createTestEmail() }
+        const [obj] = await updateTestUser(client, client.user.id, payload)
+        expect(obj.name).toEqual(payload.name)
     })
 
     test('user: update self User isAdmin should fail', async () => {
