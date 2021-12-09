@@ -9,6 +9,7 @@ const { antGlobalVariables } = require('@condo/domains/common/constants/style')
 const withTM = require('next-transpile-modules')(['@core/next', '@core/keystone', 'rc-table', '@condo/domains'])
 
 const serverUrl = process.env.SERVER_URL || 'http://localhost:3000'
+const importServiceUrl = process.env.IMPORT_SERVICE_URL || 'https://www.youtube.com/watch?v=dQw4w9WgXcQ'
 const apolloGraphQLUrl = `${serverUrl}/admin/api`
 const addressSuggestionsConfig = conf['ADDRESS_SUGGESTIONS_CONFIG'] && JSON.parse(conf['ADDRESS_SUGGESTIONS_CONFIG'])
 const mapApiKey = conf['MAP_API_KEY']
@@ -23,6 +24,7 @@ module.exports = withTM(withLess(withCSS({
         // Will be available on both server and client
         serverUrl,
         apolloGraphQLUrl,
+        importServiceUrl,
         addressSuggestionsConfig,
         mapApiKey,
         googleCaptcha,
