@@ -672,8 +672,92 @@ class MapEdit extends MapView {
 
 }
 
+type ExcelSectionsByFloorGroup = {
+    floor: string,
+    sections: [string[]?]
+}
+
+class MapImport {
+
+    map: BuildingMap = { dv: 1, type: BuildingMapEntityType.Building, sections: [] }
+    autoincrement = 0
+
+    id (): string {
+        return String(++this.autoincrement)
+    }
+
+    constructor (private xlsxInput: [[Maybe<{ value: string }>]]) { }
+
+    addSection (sectionIndex: number): void {
+        this.map.sections[sectionIndex] = {
+            id: this.id(),
+            name: String(sectionIndex + 1),
+            index: sectionIndex + 1,
+            floors: [],
+            type: BuildingMapEntityType.Section,
+        }
+    }
+
+    addFloor (sectionIndex: number, floor: number, units: string[]): void {
+        if (!this.map.sections[sectionIndex]) {
+            this.addSection(sectionIndex)
+        }
+        this.map.sections[sectionIndex].floors.push({
+            id:	this.id(),
+            name: String(floor),
+            type: BuildingMapEntityType.Floor,
+            index: floor,
+            units: units.filter(unitName => unitName !== '').map(unitName => ({
+                id:	this.id(),
+                type: BuildingMapEntityType.Unit,
+                label: unitName,
+                name: unitName,
+            })),
+        })
+    }
+
+    toJson (): string {
+        const rows = this.toRows()
+        rows.forEach(({ floor, sections }) => {
+            sections.forEach((section, index) => {
+                this.addFloor(Number(index), Number(floor), section)
+            })
+        })
+        return JSON.stringify(this.map)
+    }
+
+    splitRow (row: string[]): ExcelSectionsByFloorGroup {
+        let newChunk: string[] = []
+        const [ [floorNumber], ...sections] = row.reduce<[string[]?]>((result, el) => {
+            if (el === '') {
+                result.push(newChunk)
+                newChunk = []
+            }
+            if (el !== '') {
+                newChunk.push(el)
+            }
+            return result
+        }, [])
+        return  {
+            floor: floorNumber,
+            sections: sections,
+        }
+    }
+
+    toRows (): [ExcelSectionsByFloorGroup?] {
+        const rows: [ExcelSectionsByFloorGroup?] = []
+        this.xlsxInput.reverse().forEach(row => {
+            const fromValueObject = row.map(r => r.value ? String(r.value) : '')
+            rows.push(this.splitRow(fromValueObject))
+        })
+        return rows
+    }
+
+}
+
 
 export {
     MapView,
     MapEdit,
+    MapImport,
 }

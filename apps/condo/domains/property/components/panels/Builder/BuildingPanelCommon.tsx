@@ -1,6 +1,6 @@
 /** @jsx jsx */
 import React, { useRef, useEffect, useCallback } from 'react'
-import { Col, Row, Typography, RowProps } from 'antd'
+import {Col, Row, Typography, RowProps, Popover} from 'antd'
 import { FullscreenOutlined, FullscreenExitOutlined } from '@ant-design/icons'
 import { useIntl } from '@core/next/intl'
 import { useRouter } from 'next/router'
@@ -13,6 +13,10 @@ import { Tooltip } from '@condo/domains/common/components/Tooltip'
 import { UnitButton } from '@condo/domains/property/components/panels/Builder/UnitButton'
 import { MapEdit, MapView } from './MapConstructor'
 import { FullscreenFooter } from './Fullscreen'
+
+import { hasFeature } from '@condo/domains/common/components/containers/FeatureFlag'
+import { DataImporter } from '@condo/domains/common/components/DataImporter'
+
 
 export const CustomScrollbarCss = css`
   & div::-webkit-scrollbar {
@@ -89,18 +93,26 @@ export const EmptyBuildingBlock: React.FC<IEmptyBuildingBlock> = ({ mode = 'view
     const createMapCallback = useCallback(() => {
         push(asPath + '/map/update')
     }, [asPath])
-
-
+    const hasImportFeature = hasFeature('property_map_import')
+    const handleUpload = useCallback(({ data }) => {
+        console.log('args', JSON.stringify(data))
+    }, [])
     return (
         <BasicEmptyListView image='/propertyEmpty.svg'>
             <Typography.Title level={3} style={EMPTY_BUILDING_BLOCK_BUTTON_STYLE}>
                 {EmptyPropertyBuildingHeader}
             </Typography.Title>
             <Typography.Text style={DESCRIPTION_STYLE}>
-                {EmptyPropertyBuildingDescription}{mode === 'view' && (
+                {EmptyPropertyBuildingDescription}{mode === 'view' && !hasImportFeature && (
                     <Tooltip title={NotImplementedMessage}>
                         <Typography.Link style={IMPORT_LINK_STYLE}>{ImportExcelTitle}</Typography.Link>
                     </Tooltip>
+                )}{ mode === 'view' && hasImportFeature && (
+                    <Typography.Link style={IMPORT_LINK_STYLE}>
+                        <DataImporter onUpload={handleUpload}>
+                            {ImportExcelTitle}
+                        </DataImporter>
+                    </Typography.Link>
                 )}
             </Typography.Text>
             {mode === 'view' && (
