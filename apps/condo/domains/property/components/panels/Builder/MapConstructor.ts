@@ -677,6 +677,7 @@ type ExcelSectionsByFloorGroup = {
     sections: [string[]?]
 }
 
+
 class MapImport {
 
     map: BuildingMap = { dv: 1, type: BuildingMapEntityType.Building, sections: [] }
@@ -716,14 +717,14 @@ class MapImport {
         })
     }
 
-    toJson (): string {
+    toJs (): BuildingMap {
         const rows = this.toRows()
         rows.forEach(({ floor, sections }) => {
             sections.forEach((section, index) => {
                 this.addFloor(Number(index), Number(floor), section)
             })
         })
-        return JSON.stringify(this.map)
+        return this.map
     }
 
     splitRow (row: string[]): ExcelSectionsByFloorGroup {

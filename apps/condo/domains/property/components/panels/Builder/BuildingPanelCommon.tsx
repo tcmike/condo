@@ -1,7 +1,8 @@
 /** @jsx jsx */
 import React, { useRef, useEffect, useCallback } from 'react'
-import {Col, Row, Typography, RowProps, Popover} from 'antd'
-import { FullscreenOutlined, FullscreenExitOutlined } from '@ant-design/icons'
+import { Col, Row, Typography, RowProps } from 'antd'
+import { IPropertyUIState } from '@condo/domains/property/utils/clientSchema/Property'
+import { FullscreenOutlined, FullscreenExitOutlined, DownloadOutlined } from '@ant-design/icons'
 import { useIntl } from '@core/next/intl'
 import { useRouter } from 'next/router'
 import { jsx, css } from '@emotion/core'
@@ -11,12 +12,12 @@ import { fontSizes, colors } from '@condo/domains/common/constants/style'
 import { Button } from '@condo/domains/common/components/Button'
 import { Tooltip } from '@condo/domains/common/components/Tooltip'
 import { UnitButton } from '@condo/domains/property/components/panels/Builder/UnitButton'
-import { MapEdit, MapView } from './MapConstructor'
+import { MapEdit, MapView, MapImport } from './MapConstructor'
 import { FullscreenFooter } from './Fullscreen'
-
+import { BuildingMap } from '@app/condo/schema'
 import { hasFeature } from '@condo/domains/common/components/containers/FeatureFlag'
 import { DataImporter } from '@condo/domains/common/components/DataImporter'
-
+import { Property } from '@condo/domains/property/utils/clientSchema'
 
 export const CustomScrollbarCss = css`
   & div::-webkit-scrollbar {
@@ -63,6 +64,8 @@ export const EmptyFloor: React.FC = () => {
 
 interface IEmptyBuildingBlock {
     mode?: 'view' | 'edit'
+    property?: IPropertyUIState
+    refresh?: (map?: BuildingMap) => void
 }
 
 const IMPORT_LINK_STYLE = {
@@ -81,22 +84,29 @@ const EMPTY_BUILDING_BLOCK_BUTTON_STYLE = {
     marginTop: '20px',
 }
 
-export const EmptyBuildingBlock: React.FC<IEmptyBuildingBlock> = ({ mode = 'view' }) => {
+export const EmptyBuildingBlock: React.FC<IEmptyBuildingBlock> = ({ mode = 'view', property, refresh }) => {
     const intl = useIntl()
     const EmptyPropertyBuildingHeader = intl.formatMessage({ id: `pages.condo.property.EmptyBuildingBlock.${mode}.EmptyBuildingHeader` })
     const EmptyPropertyBuildingDescription = intl.formatMessage({ id: `pages.condo.property.EmptyBuildingBlock.${mode}.EmptyBuildingDescription` })
     const MapCreateTitle = intl.formatMessage({ id: 'pages.condo.property.EmptyBuildingBlock.view.CreateMapTitle' })
     const ImportExcelTitle = intl.formatMessage({ id: 'pages.condo.property.EmptyBuildingBlock.view.ImportDataTitle' })
     const NotImplementedMessage = intl.formatMessage({ id: 'NotImplementedYet' })
-
     const { push, asPath } = useRouter()
+    const saveMap = Property.useUpdate({})
     const createMapCallback = useCallback(() => {
-        push(asPath + '/map/update')
+        push(asPath + '/map/update').catch(error => {
+            console.error(error)
+        })
     }, [asPath])
     const hasImportFeature = hasFeature('property_map_import')
-    const handleUpload = useCallback(({ data }) => {
-        console.log('args', JSON.stringify(data))
+    const handleUpload = useCallback(( data, property) => {
+        const map = new MapImport(data)
+        const mapJs = map.toJs()
+        saveMap({ map: mapJs }, property).then(() => {
+            refresh(mapJs)
+        })
     }, [])
+
     return (
         <BasicEmptyListView image='/propertyEmpty.svg'>
             <Typography.Title level={3} style={EMPTY_BUILDING_BLOCK_BUTTON_STYLE}>
@@ -109,9 +119,11 @@ export const EmptyBuildingBlock: React.FC<IEmptyBuildingBlock> = ({ mode = 'view
                     </Tooltip>
                 )}{ mode === 'view' && hasImportFeature && (
                     <Typography.Link style={IMPORT_LINK_STYLE}>
-                        <DataImporter onUpload={handleUpload}>
+                        <DataImporter onUpload={({ data }) => handleUpload(data, property)}>
                             {ImportExcelTitle}
                         </DataImporter>
+                        &nbsp;
+                        <a href={ 'http://chess.dev.jet.team/api/chessboard/?address=' + property.address }><DownloadOutlined /></a>
                     </Typography.Link>
                 )}
             </Typography.Text>

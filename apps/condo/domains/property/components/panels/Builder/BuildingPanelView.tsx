@@ -28,7 +28,13 @@ export const BuildingPanelView: React.FC<IBuildingPanelViewProps> = ({ map }) =>
     const mapView = new MapView(map)
     const [Map, setMap] = useState(mapView)
     // TODO(zuch): Ask for a better solution
-    const refresh = () => setMap(cloneDeep(Map))
+    const refresh = (map) => {
+        if (map) {
+            setMap(new MapView(map))
+        } else {
+            setMap(cloneDeep(Map))
+        }
+    }
     return (
         <PropertyMapView builder={Map} refresh={refresh} />
     )
@@ -36,7 +42,7 @@ export const BuildingPanelView: React.FC<IBuildingPanelViewProps> = ({ map }) =>
 
 interface IPropertyMapViewProps {
     builder: MapView
-    refresh(): void
+    refresh(map?: BuildingMap): void
 }
 
 const CHESS_ROW_STYLE: React.CSSProperties = {
@@ -66,14 +72,12 @@ export const PropertyMapView: React.FC<IPropertyMapViewProps> = ({ builder, refr
     const SectionNamePrefixTitle = intl.formatMessage({ id: 'pages.condo.property.section.Name' })
 
     const { query: { id } } = useRouter()
-    const { obj: property } = useObject({ where: { id: id as string } })
-
+    const { obj: property, loading: isPropertyLoading } = useObject({ where: { id: id as string } })
     const [isFullscreen, setFullscreen] = useState(false)
 
     const toggleFullscreen = useCallback(() => {
         setFullscreen(!isFullscreen)
     }, [isFullscreen])
-
     return (
         <FullscreenWrapper mode={'view'} className={isFullscreen ? 'fullscreen' : '' }>
             <FullscreenHeader edit={false}>
@@ -86,8 +90,11 @@ export const PropertyMapView: React.FC<IPropertyMapViewProps> = ({ builder, refr
             <Row align='middle' style={CHESS_ROW_STYLE}>
                 {
                     builder.isEmpty ?
-                        <Col span={24} style={CHESS_COL_STYLE}>
-                            <EmptyBuildingBlock />
+                        <Col span={24} style={CHESS_COL_STYLE}>{
+                            !isPropertyLoading && (
+                                <EmptyBuildingBlock property={property} refresh={refresh}/>
+                            )
+                        }
                         </Col>
                         :
                         <Col span={24} style={CHESS_SCROLL_HOLDER_STYLE}>
