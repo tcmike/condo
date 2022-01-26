@@ -674,20 +674,43 @@ class MapEdit extends MapView {
 
 type ExcelSectionsByFloorGroup = {
     floor: string,
-    sections: [string[]?]
+    sections: Array<string[]>
 }
+type ExcelImportCell = Maybe<{ value: string }>
+type ExcelInput = Array<Array<ExcelImportCell>>
 
 
 class MapImport {
 
     map: BuildingMap = { dv: 1, type: BuildingMapEntityType.Building, sections: [] }
     autoincrement = 0
+    sectionIndexes = []
+
 
     id (): string {
         return String(++this.autoincrement)
     }
 
-    constructor (private xlsxInput: [[Maybe<{ value: string }>]]) { }
+    constructor (private xlsxInput: ExcelInput) { }
+
+    range ([start = 0, stop = 0]: number[]): number[] {
+        return Array.from({ length: stop - start + 1 }, (_, index) => index + start)
+    }
+
+    intersect (range1: number[], range2: number[]): number[] {
+        return this.range(range1).filter(Set.prototype.has, new Set(this.range(range2)))
+    }
+
+    addSectionIndex (range: number[]): void {
+        const [ start, end ] = range
+        const existingIndex = this.sectionIndexes.findIndex( range => this.intersect(range, [start, end]).length)
+        if (existingIndex !== -1) {
+            const [ rangeStart, rangeEnd ] = this.sectionIndexes[existingIndex]
+            this.sectionIndexes.splice(existingIndex, 1, [Math.min(rangeStart, start), Math.max(rangeEnd, end)])
+        } else {
+            this.sectionIndexes.push([start, end])
+        }
+    }
 
     addSection (sectionIndex: number): void {
         this.map.sections[sectionIndex] = {
@@ -727,29 +750,39 @@ class MapImport {
         return this.map
     }
 
-    splitRow (row: string[]): ExcelSectionsByFloorGroup {
-        let newChunk: string[] = []
-        const [ [floorNumber], ...sections] = row.reduce<[string[]?]>((result, el) => {
-            if (el === '') {
-                result.push(newChunk)
-                newChunk = []
+    calculateSectionIndexes (rows: ExcelInput): void {
+        rows.forEach(current => {
+            const allFlatsOnFloor = current.map(r => r.value ? String(r.value) : '')
+            let start = -1
+            let end = -1
+            for (let index = 1; index < allFlatsOnFloor.length; index++ ) {
+                if (allFlatsOnFloor[index] !== '') {
+                    if (start === -1) {
+                        start = index
+                    }
+                    end = index
+                } else {
+                    if (start !== -1) {
+                        this.addSectionIndex([start, end])
+                        start = -1
+                    }
+                }
             }
-            if (el !== '') {
-                newChunk.push(el)
-            }
-            return result
-        }, [])
-        return  {
-            floor: floorNumber,
-            sections: sections,
-        }
+        })
+        this.sectionIndexes.sort(([startRange1], [startRange2]) => startRange1 - startRange2)
     }
 
-    toRows (): [ExcelSectionsByFloorGroup?] {
-        const rows: [ExcelSectionsByFloorGroup?] = []
+    toRows (): Array<ExcelSectionsByFloorGroup> {
+        const rows = []
+        this.calculateSectionIndexes(this.xlsxInput)
         this.xlsxInput.reverse().forEach(row => {
-            const fromValueObject = row.map(r => r.value ? String(r.value) : '')
-            rows.push(this.splitRow(fromValueObject))
+            const flatNames = row.map(r => r.value ? String(r.value) : '')
+            if (flatNames[0]) {
+                rows.push({
+                    floor: flatNames[0],
+                    sections: this.sectionIndexes.map(([start, end]) => flatNames.slice(start, end + 1)),
+                })
+            }
         })
         return rows
     }
