@@ -1,4 +1,4 @@
-const { 
+const {
     Ticket, 
     TicketStatus, 
     TicketClassifierRule,
@@ -30,9 +30,11 @@ class TicketGenerator {
     ticketsByDay = {}
     context = null
 
-    constructor ({ ticketsByDay = { min: 20, max: 50 } }, propertyIndex = 0) {
+    constructor ({ ticketsByDay = { min: 20, max: 50 } }, yearOffset = 0, placeToAdd = { user: null, organization: null}) {
         this.ticketsByDay = ticketsByDay
-        this.propertyIndex = propertyIndex
+        this.yearOffset = yearOffset
+        this.userId = placeToAdd.user
+        this.organizationId = placeToAdd.organization
         this.pg = new Client(process.env.DATABASE_URL)
         this.pg.connect()
     }
@@ -53,7 +55,7 @@ class TicketGenerator {
     }
 
     async generateTickets () {
-        const dayStart = dayjs().startOf('year')
+        const dayStart = dayjs().add(this.yearOffset, 'year').startOf('year')
         const dayEnd = dayjs()
         let current = dayStart.add(6, 'hours')
         let maxTickets = 10000
@@ -117,16 +119,16 @@ class TicketGenerator {
     async prepareModels (propertyInfo) {
         this.statuses = await TicketStatus.getAll(this.context, { organization_is_null: true })
         this.classifiers = await TicketClassifierRule.getAll(this.context, { })
-        const [property] = await Property.getAll(this.context, { address: propertyInfo.address })
-        if (property){
-            throw new Error('Property already exists [SKIP!]')
-        }
-        const [user] = await User.getAll(this.context, { name_not_in: ['Admin', 'JustUser'] })
+        const [user] = await User.getAll(this.context, { ...this.userId ? { id: this.userId } : { name_not_in: ['Admin', 'JustUser'] } })
         this.user = user
-        const [organization] = await Organization.getAll(this.context, {})
+        const [organization] = await Organization.getAll(this.context, { ...this.organizationId ? { id: this.organizationId} : {} })
         this.organization = organization
         if (!this.organization) {
             throw new Error('Please create user with organization first')
+        }
+        const [property] = await Property.getAll(this.context, { address: propertyInfo.address, organization: { id: this.organization.id } })
+        if (property){
+            throw new Error('Property already exists [SKIP!]')
         }
         const { address, addressMeta, map } = propertyInfo
         const sender = { dv: 1, fingerprint: faker.random.alphaNumeric(8) }
@@ -171,7 +173,11 @@ class TicketGenerator {
 }
 
 const createTickets = async () => {
-    const TicketManager = new TicketGenerator({ ticketsByDay: { min: 20, max: 50 } })
+
+    const TicketManager = new TicketGenerator({ ticketsByDay: { min: 20, max: 50 } }, -1, {
+        user: '',
+        organization: '',
+    })
     console.time('keystone')
     await TicketManager.connect()
     console.timeEnd('keystone')
