@@ -12,6 +12,7 @@ const { ConfirmPhoneAction, ConfirmPhoneActionService } = require('./ConfirmPhon
 const { SigninResidentUserService } = require('./SigninResidentUserService')
 const { ChangePhoneNumberResidentUserService } = require('./ChangePhoneNumberResidentUserService')
 const { SigninAsUserService } = require('./SigninAsUserService')
+const { ResetUserService } = require('./ResetUserService')
 /* AUTOGENERATE MARKER <REQUIRE> */
 
 module.exports = {
@@ -25,5 +26,6 @@ module.exports = {
     SigninResidentUserService,
     ChangePhoneNumberResidentUserService,
     SigninAsUserService,
+    ResetUserService,
 /* AUTOGENERATE MARKER <EXPORTS> */
 }

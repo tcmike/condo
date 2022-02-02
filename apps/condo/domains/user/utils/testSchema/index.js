@@ -12,6 +12,7 @@ const { ConfirmPhoneAction: ConfirmPhoneActionGQL } = require('@condo/domains/us
 const { generateSmsCode } = require('@condo/domains/user/utils/serverSchema')
 const { ForgotPasswordAction: ForgotPasswordActionGQL } = require('@condo/domains/user/gql')
 const { SIGNIN_AS_USER_MUTATION } = require('@condo/domains/user/gql')
+const { RESET_USER_MUTATION } = require('@condo/domains/user/gql')
 /* AUTOGENERATE MARKER <IMPORT> */
 
 const User = generateGQLTestUtils(UserGQL)
@@ -234,6 +235,19 @@ async function signinAsUserByTestClient(client, id, extraAttrs = {}) {
     throwIfError(data, errors)
     return [data.result, attrs]
 }
+async function resetUserByTestClient(client, extraAttrs = {}) {
+    if (!client) throw new Error('no client')
+    const sender = { dv: 1, fingerprint: faker.random.alphaNumeric(8) }
+
+    const attrs = {
+        dv: 1,
+        sender,
+        ...extraAttrs,
+    }
+    const { data, errors } = await client.mutate(RESET_USER_MUTATION, { data: attrs })
+    throwIfError(data, errors)
+    return [data.result, attrs]
+}
 /* AUTOGENERATE MARKER <FACTORY> */
 
 module.exports = {
@@ -242,5 +256,6 @@ module.exports = {
     ConfirmPhoneAction, createTestConfirmPhoneAction, updateTestConfirmPhoneAction,
     ForgotPasswordAction, createTestForgotPasswordAction, updateTestForgotPasswordAction,
 signinAsUserByTestClient
+resetUserByTestClient
 /* AUTOGENERATE MARKER <EXPORTS> */
 }
