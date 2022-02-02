@@ -893,5 +893,6 @@
   "IncludingFee": "including fee",
   "MultiPayment.status.DONE": "Done",
   "MultiPayment.status.PROCESSING": "Processing",
-  "MultiPayment.status.ERROR": "Error"
+  "MultiPayment.status.ERROR": "Error",
+  "RegistriesUploading": "Registries uploading: {name}"
 }

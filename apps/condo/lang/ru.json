@@ -893,5 +893,6 @@
   "IncludingFee": "в том числе комиссия",
   "MultiPayment.status.DONE": "Завершено",
   "MultiPayment.status.PROCESSING": "В обработке",
-  "MultiPayment.status.ERROR": "Ошибка"
+  "MultiPayment.status.ERROR": "Ошибка",
+  "RegistriesUploading": "Загрузка реестров {name}"
 }
