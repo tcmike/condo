@@ -12867,6 +12867,7 @@ export type Mutation = {
   signinResidentUser?: Maybe<SigninResidentUserOutput>;
   changePhoneNumberResidentUser?: Maybe<ChangePhoneNumberResidentUserOutput>;
   signinAsUser?: Maybe<SigninAsUserOutput>;
+  resetUser: ResetUserOutput;
   registerNewOrganization?: Maybe<Organization>;
   inviteNewOrganizationEmployee?: Maybe<OrganizationEmployee>;
   reInviteOrganizationEmployee?: Maybe<OrganizationEmployee>;
@@ -15912,6 +15913,11 @@ export type MutationChangePhoneNumberResidentUserArgs = {
 
 export type MutationSigninAsUserArgs = {
   data: SigninAsUserInput;
+};
+
+
+export type MutationResetUserArgs = {
+  data: ResetUserInput;
 };
 
 
@@ -23581,6 +23587,17 @@ export type ResendMessageOutput = {
   __typename?: 'ResendMessageOutput';
   status: Scalars['String'];
   id: Scalars['String'];
+};
+
+export type ResetUserInput = {
+  dv: Scalars['Int'];
+  sender: Scalars['JSON'];
+  id: Scalars['String'];
+};
+
+export type ResetUserOutput = {
+  __typename?: 'ResetUserOutput';
+  status: Scalars['String'];
 };
 
 /**  Person, that resides in a specified property and unit  */
