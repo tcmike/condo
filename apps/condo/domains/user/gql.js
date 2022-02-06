@@ -112,7 +112,7 @@ const SIGNIN_AS_USER_MUTATION = gql`
 
 const RESET_USER_MUTATION = gql`
     mutation resetUser ($data: ResetUserInput!) {
-        result: resetUser(data: $data) { id }
+        result: resetUser(data: $data) { id name phone email }
     }
 `
 
@@ -137,8 +137,6 @@ module.exports = {
     SIGNIN_RESIDENT_USER_MUTATION,
     CHANGE_PHONE_NUMBER_RESIDENT_USER_MUTATION,
     SIGNIN_AS_USER_MUTATION,
-
-
     RESET_USER_MUTATION,
 
 /* AUTOGENERATE MARKER <EXPORTS> */
