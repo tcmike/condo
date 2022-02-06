@@ -235,6 +235,7 @@ async function signinAsUserByTestClient(client, id, extraAttrs = {}) {
     throwIfError(data, errors)
     return [data.result, attrs]
 }
+
 async function resetUserByTestClient(client, extraAttrs = {}) {
     if (!client) throw new Error('no client')
     const sender = { dv: 1, fingerprint: faker.random.alphaNumeric(8) }
