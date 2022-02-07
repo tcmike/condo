@@ -19,6 +19,7 @@ const { formatError } = require('@condo/domains/common/utils/apolloErrorFormatte
 const { hasValidJsonStructure } = require('@condo/domains/common/utils/validation.utils')
 const { SbbolRoutes } = require('@condo/domains/organization/integrations/sbbol/routes')
 const FileAdapter = require('@condo/domains/common/utils/fileAdapter')
+const { schemaDocPreprocessor } = require('@core/keystone/preprocessors/schemaDoc')
 
 const IS_ENABLE_DD_TRACE = conf.NODE_ENV === 'production'
 const IS_ENABLE_APOLLO_DEBUG = conf.NODE_ENV === 'development' || conf.NODE_ENV === 'test'
@@ -77,7 +78,7 @@ if (!IS_BUILD_PHASE) {
         require('@condo/domains/meter/schema'),
         require('@condo/domains/subscription/schema'),
         require('@condo/domains/acquiring/schema'),
-    ])
+    ], [schemaDocPreprocessor])
 
     registerTasks([
         require('@condo/domains/notification/tasks'),
